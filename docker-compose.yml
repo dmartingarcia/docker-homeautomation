@@ -1,0 +1,100 @@
+version: '3.6'
+services:
+  # HomeAssistant
+  homeassistant:
+    image: ghcr.io/linuxserver/homeassistant
+    container_name: homeassistant
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - ./homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /dev/serial/by-id/:/dev/serial/by-id/
+    ports:
+      - 8123:8123
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homeassistant.rule=Host(`homeassistant.${HTTP_HOST}`)"
+      - "traefik.http.routers.homeassistant.tls=true"
+      - "traefik.http.routers.homeassistant.entrypoints=websecure"
+      - "traefik.http.routers.homeassistant.tls.certresolver=lets-encrypt"
+      - "traefik.port=8123"
+    networks:
+      - web
+      - internal
+
+  esphome:
+    container_name: esphome
+    image: esphome/esphome
+    privileged: true
+    ports:
+      - 6052:6052
+    volumes:
+      - ./esphome:/config:rw
+    # network_mode: host
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.esphome.rule=Host(`esphome.${HTTP_HOST}`)"
+      - "traefik.http.routers.esphome.tls=true"
+      - "traefik.http.routers.esphome.entrypoints=websecure"
+      - "traefik.http.routers.esphome.middlewares=simpleauth@file"
+      - "traefik.http.routers.esphome.tls.certresolver=lets-encrypt"
+      - "traefik.port=6052"
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    networks:
+      - web
+      - internal
+
+  # Postgres TimescaleDB
+  timescale:
+    image: timescale/timescaledb:2.4.1-pg13
+    container_name: timescale
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ha_db
+      POSTGRES_USER: homeassistant
+      POSTGRES_PASSWORD: "${HA_POSTGRES_PASSWORD:-heytimescaledb}"
+    volumes:
+      - ./mariadb/db:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+
+  # Node-RED
+  nodered:
+    container_name: nodered
+    image: nodered/node-red
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./node-red:/data
+    environment:
+      TZ: "Europe/Madrid"
+    user: "${LOCAL_USER_ID}:${LOCAL_USER_ID}"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nodered.rule=Host(`nodered.${HTTP_HOST}`)"
+      - "traefik.http.routers.nodered.tls=true"
+      - "traefik.http.routers.nodered.entrypoints=websecure"
+      - "traefik.http.routers.nodered.middlewares=simpleauth@file"
+      - "traefik.http.routers.nodered.tls.certresolver=lets-encrypt"
+      - "traefik.port=1880"
+    networks:
+      - internal
+      - web
+
+networks:
+  web:
+    external: true
+  internal:
+    external: false
+    driver: bridge
