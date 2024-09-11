@@ -1,3 +1,7 @@
+stop:
+	docker compose down
+run:
+	docker compose up -d
 configure:
 	cp .env.example .env
 

@@ -8,7 +8,7 @@ In this case, it contains a self-efficient *home automation* / *smart home* / *I
 
 ```
 make configure
-docker-compose up -d
+docker compose up -d
 ```
 
 And browse into `http://localhost:8123 in order to see `homeassistant` setup.
