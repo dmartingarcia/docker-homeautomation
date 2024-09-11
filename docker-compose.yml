@@ -41,7 +41,7 @@ services:
       - "traefik.http.routers.esphome.rule=Host(`esphome.${HTTP_HOST}`)"
       - "traefik.http.routers.esphome.tls=true"
       - "traefik.http.routers.esphome.entrypoints=websecure"
-      - "traefik.http.routers.esphome.middlewares=simpleauth@file"
+      - "traefik.http.routers.esphome.middlewares=authelia@docker"
       - "traefik.http.routers.esphome.tls.certresolver=lets-encrypt"
       - "traefik.port=6052"
     devices:
@@ -52,7 +52,7 @@ services:
 
   # Postgres TimescaleDB
   timescale:
-    image: timescale/timescaledb:2.4.1-pg13
+    image: timescale/timescaledb:2.16.1-pg16
     container_name: timescale
     restart: unless-stopped
     environment:
@@ -85,7 +85,7 @@ services:
       - "traefik.http.routers.nodered.rule=Host(`nodered.${HTTP_HOST}`)"
       - "traefik.http.routers.nodered.tls=true"
       - "traefik.http.routers.nodered.entrypoints=websecure"
-      - "traefik.http.routers.nodered.middlewares=simpleauth@file"
+      - "traefik.http.routers.nodered.middlewares=authelia@docker"
       - "traefik.http.routers.nodered.tls.certresolver=lets-encrypt"
       - "traefik.port=1880"
     networks:
