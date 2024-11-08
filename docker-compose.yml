@@ -8,6 +8,7 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
+      - DOCKER_MODS=linuxserver/mods:homeassistant-hacs
     volumes:
       - ./homeassistant:/config
       - /etc/localtime:/etc/localtime:ro
